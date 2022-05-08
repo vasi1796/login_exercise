@@ -17,6 +17,12 @@ services:
     depends_on:
       - db
     command: ["npm", "run", "dev:debug"]
+  app:
+    build: app
+    ports:
+      - "3001:3000"
+    volumes:
+      - ./app/src:/usr/src/app/src
 volumes:
   dbLoginData:
     driver: local
