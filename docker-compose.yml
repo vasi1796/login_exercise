@@ -1,0 +1,22 @@
+services:
+  db:
+    image: postgres:latest
+    environment:
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - dbLoginData:/var/lib/postgresql/data
+  api:
+    build: api
+    ports:
+      - "3000:3000"
+      - "9229:9229"
+    volumes:
+      - ./api/src:/usr/api/src
+    depends_on:
+      - db
+    command: ["npm", "run", "dev"]
+volumes:
+  dbLoginData:
+    driver: local

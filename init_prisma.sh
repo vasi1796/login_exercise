@@ -1,0 +1,1 @@
+docker-compose start db && docker-compose run api npx prisma migrate dev
