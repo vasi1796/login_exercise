@@ -1,61 +1,66 @@
-import { Prisma, PrismaClient } from '@prisma/client'
-import express from 'express'
-import * as argon2 from 'argon2'
+import {PrismaClient} from '@prisma/client';
+import express from 'express';
+import * as argon2 from 'argon2';
 
 const prisma = new PrismaClient(
-  {
-    datasources: 
+    {
+      datasources:
     {
       db: {
-        url: process.env.DB_URL
-      }
-    }
-  }
-)
-const app = express()
+        url: process.env.DB_URL,
+      },
+    },
+    },
+);
+const app = express();
 
-app.use(express.json())
+app.use(express.json());
 
 app.post(`/signup`, async (req, res) => {
-  const { name, email, password, posts } = req.body
+  const {name, email, password} = req.body;
 
-  const user_password = await argon2.hash(`${password}${process.env.PROJECT_PEPPER}`)
+  const user_password = await argon2.hash(
+      `${password}${process.env.PROJECT_PEPPER}`,
+  );
 
   try {
     const result = await prisma.user.create({
       data: {
         name,
         email,
-        user_password
+        user_password,
       },
-    })
-    res.json(result) 
+    });
+    res.json(result);
   } catch (error) {
-    res.status(403).end()
+    res.status(403).end();
   }
-})
+});
 
-app.post('/login', async (req,res)=>{
-  const { email, password } = req.body
+app.post('/login', async (req, res)=>{
+  const {email, password} = req.body;
   const result = await prisma.user.findFirst({
     where: {email: email},
     select: {
-      user_password: true
-    }
-  })
+      user_password: true,
+    },
+  });
   if (result?.user_password) {
-    const matches = await argon2.verify(result?.user_password, `${password}${process.env.PROJECT_PEPPER}`)
-    if (matches){
-      res.status(200).end()
+    const matches = await argon2.verify(
+        result?.user_password, `${password}${process.env.PROJECT_PEPPER}`,
+    );
+    if (matches) {
+      res.status(200).end();
     } else {
-      res.status(403).end()
+      res.status(403).end();
     }
   } else {
-    res.status(404).end()
+    res.status(404).end();
   }
-})
+});
 
+// eslint-disable-next-line no-unused-vars
 const server = app.listen(3000, () =>
   console.log(`
 🚀 Server ready at: http://localhost:3000`),
-)
+);
