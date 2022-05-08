@@ -15,6 +15,7 @@
         "@typescript-eslint"
     ],
     "rules": {
-        "camelcase": "warn"
+        "camelcase": "warn",
+        "require-jsdoc": "off"
     }
 }
