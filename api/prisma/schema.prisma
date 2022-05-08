@@ -11,6 +11,8 @@ datasource db {
 model User {
   id    Int     @id @default(autoincrement())
   email String  @unique
+  user_password String
+  jwt_hash String?
   name  String?
   posts Post[]
 }

@@ -15,6 +15,7 @@ const userData: Prisma.UserCreateInput[] = [
   {
     name: 'Alice',
     email: 'alice@prisma.io',
+    user_password: '$argon2i$v=19$m=4096,t=3,p=1$ov7iDp6JMM9EAu4CmF+Arw$XcII/SgJ5nv0oNzUyAricEimWL8AOuU9wXUjj1x8bJ4',
     posts: {
       create: [
         {
@@ -28,6 +29,7 @@ const userData: Prisma.UserCreateInput[] = [
   {
     name: 'Nilu',
     email: 'nilu@prisma.io',
+    user_password: '$argon2i$v=19$m=4096,t=3,p=1$ov7iDp6JMM9EAu4CmF+Arw$XcII/SgJ5nv0oNzUyAricEimWL8AOuU9wXUjj1x8bJ4',
     posts: {
       create: [
         {
@@ -41,6 +43,7 @@ const userData: Prisma.UserCreateInput[] = [
   {
     name: 'Mahmoud',
     email: 'mahmoud@prisma.io',
+    user_password: '$argon2i$v=19$m=4096,t=3,p=1$ov7iDp6JMM9EAu4CmF+Arw$XcII/SgJ5nv0oNzUyAricEimWL8AOuU9wXUjj1x8bJ4',
     posts: {
       create: [
         {

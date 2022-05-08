@@ -1,0 +1,18 @@
+{
+  "version": "1.0.0",
+  "configurations": [
+    {
+      "type": "node",
+      "request": "attach",
+      "name": "Attach to API",
+      "port": 9229,
+      "restart": true,
+      "localRoot": "${workspaceFolder}/api",
+      "remoteRoot": "/usr/src/app/",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "/usr/src/app/*": "${workspaceFolder}/api/*"
+      }
+    }
+  ]
+}

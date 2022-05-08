@@ -13,10 +13,10 @@ services:
       - "3000:3000"
       - "9229:9229"
     volumes:
-      - ./api/src:/usr/api/src
+      - ./api:/usr/src/app
     depends_on:
       - db
-    command: ["npm", "run", "dev"]
+    command: ["npm", "run", "dev:debug"]
 volumes:
   dbLoginData:
     driver: local
