@@ -20,19 +20,13 @@ app.post(`/signup`, async (req, res) => {
   const { name, email, password, posts } = req.body
 
   const user_password = await argon2.hash(`${password}${process.env.PROJECT_PEPPER}`)
-  const postData = posts?.map((post: Prisma.PostCreateInput) => {
-    return { title: post?.title, content: post?.content }
-  })
 
   try {
     const result = await prisma.user.create({
       data: {
         name,
         email,
-        user_password,
-        posts: {
-          create: postData,
-        },
+        user_password
       },
     })
     res.json(result) 
