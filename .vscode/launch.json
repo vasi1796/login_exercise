@@ -13,6 +13,19 @@
       "sourceMapPathOverrides": {
         "/usr/src/app/*": "${workspaceFolder}/api/*"
       }
+    },
+    {
+      "type": "firefox",
+      "request": "launch",
+      "name": "Attach to React",
+      "url": "http://localhost:3001",
+      "webRoot": "${workspaceFolder}/app",
+      "pathMappings": [
+        {
+          "url": "http://localhost:3001/usr/src/app",
+          "path": "${workspaceFolder}/app"
+        }
+      ]
     }
   ]
 }

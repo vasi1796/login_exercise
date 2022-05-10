@@ -22,7 +22,18 @@ class AuthController {
       });
 
       const token = await this.generateToken(result);
-      res.json(token);
+      res.status(200)
+          .cookie('entryCookie', token, {
+            httpOnly: true,
+            expires: new Date(Date.now() + 1000 * 60 * 3),
+            sameSite: 'lax',
+          })
+          .cookie('secureCookie', token, {
+            httpOnly: true,
+            expires: new Date(Date.now() + 1000 * 60 * 3),
+            sameSite: 'strict',
+          })
+          .end();
     } catch (error) {
       res.status(403).end();
     }
@@ -39,7 +50,18 @@ class AuthController {
       );
       if (matches) {
         const token = await this.generateToken(result);
-        res.status(200).json(token).end();
+        res.status(200)
+            .cookie('entryCookie', token, {
+              httpOnly: true,
+              expires: new Date(Date.now() + 1000 * 60 * 3),
+              sameSite: 'lax',
+            })
+            .cookie('secureCookie', token, {
+              httpOnly: true,
+              expires: new Date(Date.now() + 1000 * 60 * 3),
+              sameSite: 'strict',
+            })
+            .end();
       } else {
         res.status(403).end();
       }
@@ -49,6 +71,10 @@ class AuthController {
   };
 
   checkSecret = async (req: Request, res: Response) => {
+    res.status(200).end();
+  };
+
+  addData = async (req: Request, res: Response) => {
     res.status(200).end();
   };
 
