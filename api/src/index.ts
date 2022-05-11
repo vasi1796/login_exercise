@@ -1,8 +1,10 @@
 import express from 'express';
 import apiRouter from './api/router';
 import cookieParser from 'cookie-parser';
+import {cors} from 'middleware/cors';
 
 const app = express();
+app.use(cors);
 app.use(express.json());
 app.use(cookieParser());
 app.use(apiRouter);
