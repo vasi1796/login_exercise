@@ -1,0 +1,17 @@
+.paper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    align-content: center;
+    margin-top: 40%;
+}
+
+.submit {
+    margin-top: 200px;
+}
+
+.form {
+   width: 100%;
+   align-items: center;
+   align-content: center;
+}
