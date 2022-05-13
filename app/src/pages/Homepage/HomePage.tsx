@@ -1,5 +1,27 @@
+import { Button } from '@mui/material';
+import axios from 'axios';
+import {useNavigate} from 'react-router-dom';
+import { api } from '../../environment';
+
 export default function HomePage() {
+    const navigate = useNavigate();
+    const onLogout = async () => {
+        await axios.get(`${api}/logout`, {
+            withCredentials: true
+        })
+        .then(res => {
+            if(res.status === 200){
+                navigate('/login');
+            }
+        })
+        .catch(err => {
+            console.error(err)
+        })
+    }
     return (
-        <h1>Protected</h1>
+        <div>
+            <h1>Protected</h1>
+            <Button sx={{ m:2 }} variant="contained"  onClick={onLogout}>Logout</Button>
+        </div>
     )
 }

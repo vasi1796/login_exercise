@@ -6,6 +6,7 @@ import reportWebVitals from './reportWebVitals';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import HomePage from './pages/Homepage/HomePage';
 import RequireAuth from './components/RequireAuth/RequireAuth';
+import RegisterPage from './pages/RegisterPage/RegisterPage';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -14,8 +15,9 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
     <Routes>
-    <Route path='/' element={<App />}/>
-    <Route path='/protected' element={
+    <Route path='/login' element={<App />}/>
+    <Route path='/register' element={<RegisterPage />}/>
+    <Route path='/' element={
     <RequireAuth>
       <HomePage/>
     </RequireAuth>

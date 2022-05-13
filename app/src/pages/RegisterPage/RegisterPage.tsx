@@ -1,4 +1,4 @@
-import './LoginPage.css';
+import './RegisterPage.css';
 import ParticlesBg from 'particles-bg';
 import TextField from '@mui/material/TextField';
 import { Button, Container, CssBaseline } from '@mui/material';
@@ -9,17 +9,18 @@ import { useState } from 'react';
 import { api } from '../../environment';
 
 type FormValues = {
+    name: string;
     email: string;
     password: string;
   };
   
 
-export default function LoginPage() {
+export default function RegisterPage() {
     const navigate = useNavigate();
     const {handleSubmit, control} = useForm<FormValues>();
     const [unauthorized, setUnauthorized] = useState<boolean>(false);
     const onSubmit = handleSubmit(async (data) => {
-        await axios.post(`${api}/login`, data, {
+        await axios.post(`${api}/signup`, data, {
             withCredentials: true
         })
         .then(res => {
@@ -38,13 +39,14 @@ export default function LoginPage() {
         <Container className='main' component='main' maxWidth='xs'>
             <CssBaseline/>
             <div className='paper'>
-            { unauthorized ? <div className='incorrect'>Incorrect credentials</div> : null}
+            <h2>Sign Up</h2>
+            { unauthorized ? <div className='incorrect'>Incorrect details provided</div> : null}
             <form className='form' onSubmit={onSubmit}>
                 <Controller
-                name='email'
+                name='name'
                 control={control}
-                defaultValue='alice@prisma.io'
-                rules={{ required: 'Email required' }}
+                defaultValue=''
+                rules={{ required: 'Username required' }}
                 render={({ field: { onChange, value }, fieldState: {  error } }) => (
                     <TextField 
                     label="Username" 
@@ -58,9 +60,26 @@ export default function LoginPage() {
                 )}
                 />
                 <Controller
+                name='email'
+                control={control}
+                defaultValue=''
+                rules={{ required: 'Email required' }}
+                render={({ field: { onChange, value }, fieldState: {  error } }) => (
+                    <TextField 
+                    label="Email" 
+                    variant="outlined" 
+                    margin="normal" 
+                    fullWidth 
+                    value={value}
+                    onChange={onChange}
+                    error={!!error}
+                    helperText={error ? error.message : null}/>
+                )}
+                />
+                <Controller
                 name='password'
                 control={control}
-                defaultValue='password'
+                defaultValue=''
                 rules={{ required: 'Password required' }}
                 render={({ field: { onChange, value }, fieldState: {  error } }) => (
                     <TextField 
@@ -82,19 +101,9 @@ export default function LoginPage() {
                 fullWidth
                 color="primary"
                 type='submit'>
-                    Login
+                    Register
                 </Button> 
             </form>
-            <Button 
-                sx={{ mt:2 }} 
-                variant="contained" 
-                size='large' 
-                fullWidth
-                color="secondary"
-                type='submit'
-                onClick={() => navigate('/register')}>
-                    Register
-                </Button>
             </div>
             <div className='paperBg'>
             <ParticlesBg type='cobweb' bg={true}/>

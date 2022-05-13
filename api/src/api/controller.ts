@@ -62,12 +62,16 @@ class AuthController {
               sameSite: 'strict',
             })
             .end();
-      } else {
-        res.status(403).end();
       }
-    } else {
-      res.status(404).end();
     }
+    res.status(403).end();
+  };
+
+  logout = async (req: Request, res: Response)=>{
+    res.status(200)
+        .clearCookie('entryCookie')
+        .clearCookie('secureCookie')
+        .end();
   };
 
   checkSecret = async (req: Request, res: Response) => {

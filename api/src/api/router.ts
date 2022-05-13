@@ -9,6 +9,8 @@ router.post(`/signup`, AuthController.signup);
 
 router.post('/login', AuthController.login);
 
+router.get('/logout', AuthController.logout);
+
 router.get('/protected', validate, AuthController.checkSecret);
 
 router.post('/add-data', authorize, AuthController.addData);
