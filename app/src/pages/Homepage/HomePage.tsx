@@ -20,8 +20,15 @@ export default function HomePage() {
     }
     return (
         <div>
-            <h1>Protected</h1>
+            <h1>Protected path</h1>
             <Button sx={{ m:2 }} variant="contained"  onClick={onLogout}>Logout</Button>
+            <Button 
+                sx={{ m:2 }} 
+                variant="contained" 
+                color="secondary"
+                onClick={() => navigate('/register')}>
+                    Register new user
+                </Button>
         </div>
     )
 }

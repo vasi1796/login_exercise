@@ -39,7 +39,7 @@ export default function RegisterPage() {
         <Container className='main' component='main' maxWidth='xs'>
             <CssBaseline/>
             <div className='paper'>
-            <h2>Sign Up</h2>
+            <h2>Register new user</h2>
             { unauthorized ? <div className='incorrect'>Incorrect details provided</div> : null}
             <form className='form' onSubmit={onSubmit}>
                 <Controller

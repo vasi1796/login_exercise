@@ -85,16 +85,6 @@ export default function LoginPage() {
                     Login
                 </Button> 
             </form>
-            <Button 
-                sx={{ mt:2 }} 
-                variant="contained" 
-                size='large' 
-                fullWidth
-                color="secondary"
-                type='submit'
-                onClick={() => navigate('/register')}>
-                    Register
-                </Button>
             </div>
             <div className='paperBg'>
             <ParticlesBg type='cobweb' bg={true}/>
