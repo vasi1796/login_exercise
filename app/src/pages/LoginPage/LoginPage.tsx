@@ -76,8 +76,11 @@ export default function SignIn() {
                     Login
                 </Button> 
             </form>
+            
             </div>
+            <div className='paperBg'>
             <ParticlesBg type='cobweb' bg={true}/>
+            </div>
         </Container>
     )
 }
