@@ -22,6 +22,10 @@
       "webRoot": "${workspaceFolder}/app",
       "pathMappings": [
         {
+          "url": "file:///usr/src/app/src",
+          "path": "${workspaceFolder}/app/src"
+        },
+        {
           "url": "http://localhost:3001/usr/src/app",
           "path": "${workspaceFolder}/app"
         }
