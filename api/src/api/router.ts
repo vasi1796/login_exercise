@@ -13,4 +13,6 @@ router.get('/protected', validate, AuthController.checkSecret);
 
 router.post('/add-data', authorize, AuthController.addData);
 
+router.get('/logged-in', validate, AuthController.checkLogin);
+
 export default router;

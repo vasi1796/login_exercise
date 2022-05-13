@@ -3,13 +3,25 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import HomePage from './pages/Homepage/HomePage';
+import RequireAuth from './components/RequireAuth/RequireAuth';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 root.render(
   <React.StrictMode>
-    <App />
+    <BrowserRouter>
+    <Routes>
+    <Route path='/' element={<App />}/>
+    <Route path='/protected' element={
+    <RequireAuth>
+      <HomePage/>
+    </RequireAuth>
+    }/>
+    </Routes>
+    </BrowserRouter>
   </React.StrictMode>
 );
 

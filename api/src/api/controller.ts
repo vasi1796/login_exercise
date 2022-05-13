@@ -74,6 +74,10 @@ class AuthController {
     res.status(200).end();
   };
 
+  checkLogin = (req: Request, res: Response) => {
+    res.status(200).json({loggedIn: true}).end();
+  };
+
   addData = async (req: Request, res: Response) => {
     res.status(200).end();
   };

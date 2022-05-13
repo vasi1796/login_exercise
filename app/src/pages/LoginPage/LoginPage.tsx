@@ -4,6 +4,7 @@ import TextField from '@mui/material/TextField';
 import { Button, Container, CssBaseline } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
+import {useNavigate} from 'react-router-dom';
 
 type FormValues = {
     email: string;
@@ -12,12 +13,17 @@ type FormValues = {
   
 
 export default function SignIn() {
+    const navigate = useNavigate();
     const {handleSubmit, control} = useForm<FormValues>();
     const onSubmit = handleSubmit(async (data) => {
         await axios.post('http://localhost:3000/login', data, {
             withCredentials: true
         })
-        .then(res => console.log('success',res))
+        .then(res => {
+            if(res.status === 200){
+                navigate('/protected');
+            }
+        })
         .catch(err => console.error(err))
     });
     return(
