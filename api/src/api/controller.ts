@@ -37,10 +37,12 @@ class AuthController {
         encryptedOtp += otpCipher.final('hex');
       }
 
+      // Hash regular password
       const user_password = await argon2.hash(
           `${password}${process.env.PROJECT_PEPPER}`,
       );
 
+      // Store new user
       const result = await db.prisma.user.create({
         data: {
           name,
@@ -51,6 +53,7 @@ class AuthController {
         },
       });
 
+      // Generate cookies for further requests
       const token = await this.generateToken(result);
       res.status(200)
           .cookie('entryCookie', token, {
@@ -81,8 +84,9 @@ class AuthController {
             result?.user_password, `${password}${process.env.PROJECT_PEPPER}`,
         );
 
+        // If OTP enabled decrypt and check
         if (result.totp && result.totp_iv) {
-          // the decipher function
+          // Decrypt shared secret
           const algorithm = 'aes-256-cbc';
           const decipher = crypto.createDecipheriv(
               algorithm,
@@ -90,8 +94,9 @@ class AuthController {
               Buffer.from(result.totp_iv, 'base64'));
 
           let decryptedOtp = decipher.update(result.totp, 'hex', 'utf-8');
-
           decryptedOtp += decipher.final('utf8');
+
+          // Validate OTP
           const validated = speakeasy.totp.verify({
             secret: decryptedOtp,
             encoding: 'base32',
