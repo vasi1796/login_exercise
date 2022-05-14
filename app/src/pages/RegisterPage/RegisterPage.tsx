@@ -1,7 +1,7 @@
 import './RegisterPage.css';
 import ParticlesBg from 'particles-bg';
 import TextField from '@mui/material/TextField';
-import { Button, Container, CssBaseline } from '@mui/material';
+import { Button, Checkbox, Container, CssBaseline } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
 import {useNavigate} from 'react-router-dom';
@@ -29,6 +29,7 @@ export default function RegisterPage() {
     const navigate = useNavigate();
     const {handleSubmit, control} = useForm<FormValues>();
     const [unauthorized, setUnauthorized] = useState<boolean>(false);
+    const [otpEnabled, setOtpEnabled] = useState<boolean>(false);
     const [qrCode, setQRCode] = useState<QRSecret|undefined>(undefined);
     useEffect(() => {
         axios.get(`${api}/otp`, {withCredentials: true})
@@ -64,7 +65,7 @@ export default function RegisterPage() {
             <div className='paper'>
             <h2>Register new user</h2>
             { unauthorized ? <div className='incorrect'>Incorrect details provided</div> : null}
-            { qrCode && qrCode.qr ? <img src={qrCode.qr}/> : null}
+            { qrCode && qrCode.qr && otpEnabled ? <img src={qrCode.qr}/> : null}
             <form className='form' onSubmit={onSubmit}>
                 <Controller
                 name='name'
@@ -119,23 +120,30 @@ export default function RegisterPage() {
                     helperText={error ? error.message : null}/>
                 )}
                 />
-                <Controller
-                name='otp_token'
-                control={control}
-                defaultValue=''
-                rules={{ required: 'OTP Code required' }}
-                render={({ field: { onChange, value }, fieldState: {  error } }) => (
-                    <TextField 
-                    label="OTP Code" 
-                    variant="outlined" 
-                    margin="normal" 
-                    fullWidth 
-                    value={value}
-                    onChange={onChange}
-                    error={!!error}
-                    helperText={error ? error.message : null}/>
-                )}
-                />
+                <div>
+                    <Checkbox
+                    checked={otpEnabled}
+                    onChange={() => setOtpEnabled(!otpEnabled)}/>
+                        Enable 2FA
+                </div>
+                { otpEnabled ?
+                    <Controller
+                    name='otp_token'
+                    control={control}
+                    defaultValue=''
+                    rules={{ required: otpEnabled ? 'OTP Required' : false }}
+                    render={({ field: { onChange, value }, fieldState: {  error } }) => (
+                        <TextField 
+                        label="OTP Code" 
+                        variant="outlined" 
+                        margin="normal" 
+                        fullWidth 
+                        value={value}
+                        onChange={onChange}
+                        error={!!error}
+                        helperText={error ? error.message : null}/>
+                    )}
+                    /> : null }
                 <Button 
                 sx={{ mt:2 }} 
                 variant="contained" 

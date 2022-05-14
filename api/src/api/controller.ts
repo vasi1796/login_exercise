@@ -4,50 +4,68 @@ import db from '../services/db';
 import * as jwt from 'jsonwebtoken';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
+import * as crypto from 'crypto';
 import {User} from '@prisma/client';
 
 class AuthController {
   signup = async (req: Request, res: Response) => {
-    const {name, email, password, base32, otp_token} = req.body;
-
-    const user_password = await argon2.hash(
-        `${password}${process.env.PROJECT_PEPPER}`,
-    );
-
     try {
-      const verified = speakeasy.totp.verify({
-        secret: base32,
-        encoding: 'base32',
-        token: otp_token,
+      const {name, email, password, base32, otp_token} = req.body;
+      let otpVerified: boolean = false;
+      let otpCipher: crypto.Cipher | undefined = undefined;
+      let otpIv: Buffer | undefined = undefined;
+      let encryptedOtp: string | undefined = undefined;
+
+      // Verify secret against user token
+      if (otp_token) {
+        otpVerified = speakeasy.totp.verify({
+          secret: base32,
+          encoding: 'base32',
+          token: otp_token,
+        });
+        if (!otpVerified) throw new Error('OTP not verified');
+
+        // Encrypt with aes
+        const algorithm = 'aes-256-cbc';
+        // generate 16 bytes of random data
+        otpIv = crypto.randomBytes(16);
+        otpCipher = crypto.createCipheriv(
+            algorithm,
+            process.env.TOTP_SECRET as string,
+            otpIv);
+        encryptedOtp = otpCipher.update(base32, 'utf-8', 'hex');
+        encryptedOtp += otpCipher.final('hex');
+      }
+
+      const user_password = await argon2.hash(
+          `${password}${process.env.PROJECT_PEPPER}`,
+      );
+
+      const result = await db.prisma.user.create({
+        data: {
+          name,
+          email,
+          user_password,
+          totp_iv: otpVerified ? otpIv?.toString('base64') : undefined,
+          totp: otpVerified ? encryptedOtp : undefined,
+        },
       });
 
-      if (verified) {
-        const result = await db.prisma.user.create({
-          data: {
-            name,
-            email,
-            user_password,
-            totp: base32,
-          },
-        });
-
-        const token = await this.generateToken(result);
-        res.status(200)
-            .cookie('entryCookie', token, {
-              httpOnly: true,
-              expires: new Date(Date.now() + 1000 * 60 * 3),
-              sameSite: 'lax',
-            })
-            .cookie('secureCookie', token, {
-              httpOnly: true,
-              expires: new Date(Date.now() + 1000 * 60 * 3),
-              sameSite: 'strict',
-            })
-            .end();
-      } else {
-        throw new Error('OTP not verified');
-      }
+      const token = await this.generateToken(result);
+      res.status(200)
+          .cookie('entryCookie', token, {
+            httpOnly: true,
+            expires: new Date(Date.now() + 1000 * 60 * 3),
+            sameSite: 'lax',
+          })
+          .cookie('secureCookie', token, {
+            httpOnly: true,
+            expires: new Date(Date.now() + 1000 * 60 * 3),
+            sameSite: 'strict',
+          })
+          .end();
     } catch (error) {
+      console.error(error);
       res.status(403).end();
     }
   };
@@ -63,9 +81,19 @@ class AuthController {
             result?.user_password, `${password}${process.env.PROJECT_PEPPER}`,
         );
 
-        if (result.totp) {
+        if (result.totp && result.totp_iv) {
+          // the decipher function
+          const algorithm = 'aes-256-cbc';
+          const decipher = crypto.createDecipheriv(
+              algorithm,
+              process.env.TOTP_SECRET as string,
+              Buffer.from(result.totp_iv, 'base64'));
+
+          let decryptedOtp = decipher.update(result.totp, 'hex', 'utf-8');
+
+          decryptedOtp += decipher.final('utf8');
           const validated = speakeasy.totp.verify({
-            secret: result.totp,
+            secret: decryptedOtp,
             encoding: 'base32',
             token: otp_token,
           });
@@ -109,7 +137,7 @@ class AuthController {
         if (!err) {
           res.status(200).send({qr: qrImage, secret: secret}).end();
         } else {
-          res.status(403).end();
+          res.status(404).end();
         }
       });
     }

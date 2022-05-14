@@ -14,5 +14,6 @@ model User {
   user_password String
   jwt_hash String?
   totp String?
+  totp_iv String?
   name  String?
 }
