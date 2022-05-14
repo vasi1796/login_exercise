@@ -11,6 +11,7 @@ import { api } from '../../environment';
 type FormValues = {
     email: string;
     password: string;
+    otp_token: string;
   };
   
 
@@ -69,6 +70,23 @@ export default function LoginPage() {
                     margin="normal" 
                     fullWidth 
                     type='password'
+                    value={value}
+                    onChange={onChange}
+                    error={!!error}
+                    helperText={error ? error.message : null}/>
+                )}
+                />
+                <Controller
+                name='otp_token'
+                control={control}
+                defaultValue=''
+                rules={{ required: false }}
+                render={({ field: { onChange, value }, fieldState: {  error } }) => (
+                    <TextField 
+                    label="Code - optional" 
+                    variant="outlined" 
+                    margin="normal" 
+                    fullWidth 
                     value={value}
                     onChange={onChange}
                     error={!!error}

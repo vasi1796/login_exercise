@@ -5,21 +5,44 @@ import { Button, Container, CssBaseline } from '@mui/material';
 import { useForm, Controller } from 'react-hook-form';
 import axios from 'axios';
 import {useNavigate} from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { api } from '../../environment';
 
 type FormValues = {
     name: string;
     email: string;
     password: string;
+    otp_token: string;
+    base32: string;
   };
-  
+
+type QRSecret = {
+    qr: string,
+    secret: { 
+    ascii: string,
+    base32: string,
+    hex: string
+    }
+}
 
 export default function RegisterPage() {
     const navigate = useNavigate();
     const {handleSubmit, control} = useForm<FormValues>();
     const [unauthorized, setUnauthorized] = useState<boolean>(false);
+    const [qrCode, setQRCode] = useState<QRSecret|undefined>(undefined);
+    useEffect(() => {
+        axios.get(`${api}/otp`, {withCredentials: true})
+        .then(res => {
+          if(res.status===200){
+            setQRCode(res.data)
+          }
+        })
+        .catch(err=> {
+          console.error(err)
+        });
+      }, []);
     const onSubmit = handleSubmit(async (data) => {
+        data.base32 = (qrCode && qrCode.secret.base32) || '';
         await axios.post(`${api}/signup`, data, {
             withCredentials: true
         })
@@ -41,6 +64,7 @@ export default function RegisterPage() {
             <div className='paper'>
             <h2>Register new user</h2>
             { unauthorized ? <div className='incorrect'>Incorrect details provided</div> : null}
+            { qrCode && qrCode.qr ? <img src={qrCode.qr}/> : null}
             <form className='form' onSubmit={onSubmit}>
                 <Controller
                 name='name'
@@ -71,6 +95,7 @@ export default function RegisterPage() {
                     margin="normal" 
                     fullWidth 
                     value={value}
+                    type='email'
                     onChange={onChange}
                     error={!!error}
                     helperText={error ? error.message : null}/>
@@ -88,6 +113,23 @@ export default function RegisterPage() {
                     margin="normal" 
                     fullWidth 
                     type='password'
+                    value={value}
+                    onChange={onChange}
+                    error={!!error}
+                    helperText={error ? error.message : null}/>
+                )}
+                />
+                <Controller
+                name='otp_token'
+                control={control}
+                defaultValue=''
+                rules={{ required: 'OTP Code required' }}
+                render={({ field: { onChange, value }, fieldState: {  error } }) => (
+                    <TextField 
+                    label="OTP Code" 
+                    variant="outlined" 
+                    margin="normal" 
+                    fullWidth 
                     value={value}
                     onChange={onChange}
                     error={!!error}
