@@ -7,6 +7,7 @@ import axios from 'axios';
 import {useNavigate} from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { api } from '../../environment';
+import ReactPhoneInput from 'react-phone-input-material-ui';
 
 type FormValues = {
     name: string;
@@ -14,6 +15,7 @@ type FormValues = {
     password: string;
     otp_token: string;
     base32: string;
+    tel_number: string;
   };
 
 type QRSecret = {
@@ -25,11 +27,17 @@ type QRSecret = {
     }
 }
 
+type MFAChecks = {
+    mfa: boolean,
+    app: boolean,
+    sms: boolean
+}
+
 export default function RegisterPage() {
     const navigate = useNavigate();
     const {handleSubmit, control} = useForm<FormValues>();
     const [unauthorized, setUnauthorized] = useState<boolean>(false);
-    const [otpEnabled, setOtpEnabled] = useState<boolean>(false);
+    const [mfaEnabled, setMFAEnabled] = useState<MFAChecks>({mfa: false, app: false, sms: false});
     const [qrCode, setQRCode] = useState<QRSecret|undefined>(undefined);
     useEffect(() => {
         axios.get(`${api}/otp`, {withCredentials: true})
@@ -43,6 +51,7 @@ export default function RegisterPage() {
         });
       }, []);
     const onSubmit = handleSubmit(async (data) => {
+        console.log(data);
         data.base32 = (qrCode && qrCode.secret.base32) || '';
         await axios.post(`${api}/signup`, data, {
             withCredentials: true
@@ -65,7 +74,7 @@ export default function RegisterPage() {
             <div className='paper'>
             <h2>Register new user</h2>
             { unauthorized ? <div className='incorrect'>Incorrect details provided</div> : null}
-            { qrCode && qrCode.qr && otpEnabled ? <img src={qrCode.qr}/> : null}
+            { qrCode && qrCode.qr && mfaEnabled.app ? <img src={qrCode.qr}/> : null}
             <form className='form' onSubmit={onSubmit}>
                 <Controller
                 name='name'
@@ -122,16 +131,27 @@ export default function RegisterPage() {
                 />
                 <div>
                     <Checkbox
-                    checked={otpEnabled}
-                    onChange={() => setOtpEnabled(!otpEnabled)}/>
+                    checked={mfaEnabled.mfa}
+                    onChange={() => setMFAEnabled({mfa: !mfaEnabled.mfa, app: mfaEnabled.app, sms: mfaEnabled.sms})}/>
                         Enable 2FA
+                    {mfaEnabled.mfa? 
+                    <div>
+                         <Checkbox
+                    checked={mfaEnabled.app}
+                    onChange={() => setMFAEnabled({mfa: mfaEnabled.mfa, app: !mfaEnabled.app, sms: mfaEnabled.sms})}/>
+                        Auth app
+                        <Checkbox
+                    checked={mfaEnabled.sms}
+                    onChange={() => setMFAEnabled({mfa: mfaEnabled.mfa, app: mfaEnabled.app, sms: !mfaEnabled.sms})}/>
+                        SMS
+                    </div> : null}
                 </div>
-                { otpEnabled ?
+                { mfaEnabled.app ?
                     <Controller
                     name='otp_token'
                     control={control}
                     defaultValue=''
-                    rules={{ required: otpEnabled ? 'OTP Required' : false }}
+                    rules={{ required: mfaEnabled.app ? 'OTP Required' : false }}
                     render={({ field: { onChange, value }, fieldState: {  error } }) => (
                         <TextField 
                         label="OTP Code" 
@@ -142,6 +162,21 @@ export default function RegisterPage() {
                         onChange={onChange}
                         error={!!error}
                         helperText={error ? error.message : null}/>
+                    )}
+                    /> : null }
+                { mfaEnabled.sms ?
+                    <Controller
+                    name='tel_number'
+                    control={control}
+                    defaultValue=''
+                    rules={{ required: mfaEnabled.sms ? 'Phone Number Required' : false }}
+                    render={({ field: { onChange, value }, fieldState: {  error } }) => (
+                        <ReactPhoneInput
+                            value={value}
+                            onChange={onChange}
+                            component={TextField}
+                            autoFormat={true}
+                            defaultErrorMessage={error ? error.message : undefined}/>
                     )}
                     /> : null }
                 <Button 

@@ -6,11 +6,21 @@ import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
 import * as crypto from 'crypto';
 import {User} from '@prisma/client';
+import {client} from '../services/sms';
 
 class AuthController {
   signup = async (req: Request, res: Response) => {
     try {
-      const {name, email, password, base32, otp_token} = req.body;
+      const {name, email, password, base32, otp_token, tel_number} = req.body;
+      // placeholder to test twilio
+      await client.messages
+          .create({
+            body: 'Hello from Registration',
+            to: `+${tel_number}`, // Text this number
+            from: process.env.TWILIO_NO, // From a valid Twilio number
+          })
+          .then((message) => console.log(message.sid))
+          .catch((err) => console.log(err));
       let otpVerified: boolean = false;
       let otpCipher: crypto.Cipher | undefined = undefined;
       let otpIv: Buffer | undefined = undefined;
@@ -73,7 +83,7 @@ class AuthController {
     }
   };
 
-  login = async (req: Request, res: Response)=>{
+  verifyOtp = async (req: Request, res: Response) => {
     try {
       const {email, password, otp_token} = req.body;
       const result = await db.prisma.user.findFirst({
@@ -83,31 +93,74 @@ class AuthController {
         const matches = await argon2.verify(
             result?.user_password, `${password}${process.env.PROJECT_PEPPER}`,
         );
-
+        if (matches) {
         // If OTP enabled decrypt and check
-        if (result.totp && result.totp_iv) {
-          // Decrypt shared secret
-          const algorithm = 'aes-256-cbc';
-          const decipher = crypto.createDecipheriv(
-              algorithm,
-              process.env.TOTP_SECRET as string,
-              Buffer.from(result.totp_iv, 'base64'));
+          if (result.totp && result.totp_iv) {
+            // Decrypt shared secret
+            const algorithm = 'aes-256-cbc';
+            const decipher = crypto.createDecipheriv(
+                algorithm,
+        process.env.TOTP_SECRET as string,
+        Buffer.from(result.totp_iv, 'base64'));
 
-          let decryptedOtp = decipher.update(result.totp, 'hex', 'utf-8');
-          decryptedOtp += decipher.final('utf8');
+            let decryptedOtp = decipher.update(result.totp, 'hex', 'utf-8');
+            decryptedOtp += decipher.final('utf8');
 
-          // Validate OTP
-          const validated = speakeasy.totp.verify({
-            secret: decryptedOtp,
-            encoding: 'base32',
-            token: otp_token,
-          });
-          if (!validated) throw new Error('Incorrect OTP');
+            // Validate OTP
+            const validated = speakeasy.totp.verify({
+              secret: decryptedOtp,
+              encoding: 'base32',
+              token: otp_token,
+            });
+            if (!validated) throw new Error('Incorrect OTP');
+            const token = await this.generateToken(result);
+            return res.status(200)
+                .clearCookie('otpCookie')
+                .cookie('entryCookie', token, {
+                  httpOnly: true,
+                  expires: new Date(Date.now() + 1000 * 60 * 3),
+                  sameSite: 'lax',
+                })
+                .cookie('secureCookie', token, {
+                  httpOnly: true,
+                  expires: new Date(Date.now() + 1000 * 60 * 3),
+                  sameSite: 'strict',
+                })
+                .end();
+          }
         }
+      }
+    } catch (error) {
+      return res.status(403).end();
+    }
+    return res.status(403).end();
+  };
+
+  login = async (req: Request, res: Response)=>{
+    try {
+      const {email, password} = req.body;
+      const result = await db.prisma.user.findFirst({
+        where: {email: email},
+      });
+      if (result) {
+        const matches = await argon2.verify(
+            result?.user_password, `${password}${process.env.PROJECT_PEPPER}`,
+        );
 
         if (matches) {
+          if (result.totp && result.totp_iv) {
+            const token = await this.generateToken(result);
+            return res.status(200)
+                .cookie('otpCookie', token, {
+                  httpOnly: true,
+                  expires: new Date(Date.now() + 1000 * 60 * 3),
+                  sameSite: 'strict',
+                })
+                .json({'otp': true})
+                .end();
+          }
           const token = await this.generateToken(result);
-          res.status(200)
+          return res.status(200)
               .cookie('entryCookie', token, {
                 httpOnly: true,
                 expires: new Date(Date.now() + 1000 * 60 * 3),
@@ -122,10 +175,10 @@ class AuthController {
         }
       }
     } catch (error) {
-      res.status(403).end();
       console.log(error);
+      return res.status(403).end();
     }
-    res.status(403).end();
+    return res.status(403).end();
   };
 
   logout = async (req: Request, res: Response)=>{

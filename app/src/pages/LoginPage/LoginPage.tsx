@@ -18,22 +18,44 @@ type FormValues = {
 export default function LoginPage() {
     const navigate = useNavigate();
     const {handleSubmit, control} = useForm<FormValues>();
+    const [phase, setPhase] = useState<number>(0);
     const [unauthorized, setUnauthorized] = useState<boolean>(false);
     const onSubmit = handleSubmit(async (data) => {
-        await axios.post(`${api}/login`, data, {
-            withCredentials: true
-        })
-        .then(res => {
-            if(res.status === 200){
-                navigate('/');
-            }
-        })
-        .catch(err => {
-            if(err.response && err.response.status === 403){
-                setUnauthorized(true);
-            }
-            console.error(err)
-        })
+        if (phase === 0) {
+            await axios.post(`${api}/login`, data, {
+                withCredentials: true
+            })
+            .then(res => {
+                if(res.status === 200){
+                    if(res.data['otp'] === true) {
+                        setPhase(1);
+                    } else {
+                        navigate('/');
+                    }
+                }
+            })
+            .catch(err => {
+                if(err.response && err.response.status === 403){
+                    setUnauthorized(true);
+                }
+                console.error(err)
+            })
+        } else if (phase === 1) {
+            await axios.post(`${api}/verify-otp`, data, {
+                withCredentials: true
+            })
+            .then(res => {
+                if(res.status === 200){
+                    navigate('/');
+                }
+            })
+            .catch(err => {
+                if(err.response && err.response.status === 403){
+                    setUnauthorized(true);
+                }
+                console.error(err)
+            })
+        }
     });
     return(
         <Container className='main' component='main' maxWidth='xs'>
@@ -41,6 +63,8 @@ export default function LoginPage() {
             <div className='paper'>
             { unauthorized ? <div className='incorrect'>Incorrect credentials</div> : null}
             <form className='form' onSubmit={onSubmit}>
+                { phase === 0 ? 
+                <div>
                 <Controller
                 name='email'
                 control={control}
@@ -76,6 +100,7 @@ export default function LoginPage() {
                     helperText={error ? error.message : null}/>
                 )}
                 />
+                </div> :
                 <Controller
                 name='otp_token'
                 control={control}
@@ -83,7 +108,7 @@ export default function LoginPage() {
                 rules={{ required: false }}
                 render={({ field: { onChange, value }, fieldState: {  error } }) => (
                     <TextField 
-                    label="Code - optional" 
+                    label="OTP Code" 
                     variant="outlined" 
                     margin="normal" 
                     fullWidth 
@@ -92,7 +117,8 @@ export default function LoginPage() {
                     error={!!error}
                     helperText={error ? error.message : null}/>
                 )}
-                />
+                /> 
+                }
                 <Button 
                 sx={{ mt:2 }} 
                 variant="contained" 
@@ -100,7 +126,7 @@ export default function LoginPage() {
                 fullWidth
                 color="primary"
                 type='submit'>
-                    Login
+                    {phase === 0 ? 'Login' : 'Verify'}
                 </Button> 
             </form>
             </div>
