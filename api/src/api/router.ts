@@ -9,6 +9,8 @@ router.post('/login', AuthController.login);
 
 router.post('/verify-number', authorize, AuthController.verifyNumber);
 
+router.post('/sms-login', authorizeOtp, AuthController.generateLoginSMS);
+
 router.post('/verify-otp', authorizeOtp, AuthController.verifyOtp);
 
 router.get('/logout', AuthController.logout);

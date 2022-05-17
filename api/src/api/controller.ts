@@ -4,11 +4,10 @@ import db from '../services/db';
 import * as jwt from 'jsonwebtoken';
 import * as speakeasy from 'speakeasy';
 import * as qrcode from 'qrcode';
-import * as crypto from 'crypto';
 import {User} from '@prisma/client';
 import {client} from '../services/sms';
 import {redisClient} from 'services/cache';
-import {encrypt} from 'util/util';
+import {decrypt, encrypt} from 'util/util';
 class AuthController {
   verifyNumber = async (req: Request, res: Response) => {
     const {email, tel_number} = req.body;
@@ -100,9 +99,35 @@ class AuthController {
     }
   };
 
+  generateLoginSMS = async (req: Request, res: Response) => {
+    const {email} = req.body;
+    const result = await db.prisma.user.findFirst({
+      where: {email: email},
+    });
+    if (result && result.number_iv && result.number) {
+      const decryptedNumber = decrypt(result.number, result.number_iv);
+      const generatedNumber = Math.floor(Math.random() * 899999 + 100000);
+      // Send sms verification
+      await client.messages
+          .create({
+            body: `Your OTP verification code is ${generatedNumber}`,
+            to: `+${decryptedNumber}`,
+            from: process.env.TWILIO_NO,
+          })
+          .then((message) => console.log(message.sid))
+          .catch((err) => {
+            console.log(err);
+            res.status(500).end();
+          });
+      await redisClient.set(result.email, `${generatedNumber}`);
+      await redisClient.expire(result.email, 300);
+      res.status(200).end();
+    }
+  };
+
   verifyOtp = async (req: Request, res: Response) => {
     try {
-      const {email, password, otp_token} = req.body;
+      const {email, password, otp_token, sms_token} = req.body;
       const result = await db.prisma.user.findFirst({
         where: {email: email},
       });
@@ -112,16 +137,8 @@ class AuthController {
         );
         if (matches) {
         // If OTP enabled decrypt and check
-          if (result.totp && result.totp_iv) {
-            // Decrypt shared secret
-            const algorithm = 'aes-256-cbc';
-            const decipher = crypto.createDecipheriv(
-                algorithm,
-        process.env.TOTP_SECRET as string,
-        Buffer.from(result.totp_iv, 'base64'));
-
-            let decryptedOtp = decipher.update(result.totp, 'hex', 'utf-8');
-            decryptedOtp += decipher.final('utf8');
+          if (result.totp && result.totp_iv && otp_token) {
+            const decryptedOtp = decrypt(result.totp, result.totp_iv);
 
             // Validate OTP
             const validated = speakeasy.totp.verify({
@@ -130,6 +147,23 @@ class AuthController {
               token: otp_token,
             });
             if (!validated) throw new Error('Incorrect OTP');
+            const token = await this.generateToken(result);
+            return res.status(200)
+                .clearCookie('otpCookie')
+                .cookie('entryCookie', token, {
+                  httpOnly: true,
+                  expires: new Date(Date.now() + 1000 * 60 * 3),
+                  sameSite: 'lax',
+                })
+                .cookie('secureCookie', token, {
+                  httpOnly: true,
+                  expires: new Date(Date.now() + 1000 * 60 * 3),
+                  sameSite: 'strict',
+                })
+                .end();
+          } else if (sms_token) {
+            const smsToken = await redisClient.get(email);
+            if (sms_token !== smsToken) throw new Error('SMS OTP not correct');
             const token = await this.generateToken(result);
             return res.status(200)
                 .clearCookie('otpCookie')
@@ -165,7 +199,9 @@ class AuthController {
         );
 
         if (matches) {
-          if (result.totp && result.totp_iv) {
+          // NOTE: Let user know that we need additional information
+          if ((result.totp && result.totp_iv) ||
+           (result.number && result.number_iv)) {
             const token = await this.generateToken(result);
             return res.status(200)
                 .cookie('otpCookie', token, {
@@ -173,7 +209,11 @@ class AuthController {
                   expires: new Date(Date.now() + 1000 * 60 * 3),
                   sameSite: 'strict',
                 })
-                .json({'otp': true})
+                .json({
+                  'otp': result.totp && result.totp_iv ? true : false,
+                  'smsEnabled': result.number && result.number_iv ?
+                  true : false,
+                })
                 .end();
           }
           const token = await this.generateToken(result);

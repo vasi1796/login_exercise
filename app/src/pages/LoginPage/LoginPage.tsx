@@ -12,6 +12,7 @@ type FormValues = {
     email: string;
     password: string;
     otp_token: string;
+    sms_token: string;
   };
   
 
@@ -19,16 +20,23 @@ export default function LoginPage() {
     const navigate = useNavigate();
     const {handleSubmit, control} = useForm<FormValues>();
     const [phase, setPhase] = useState<number>(0);
+    const [smsEnabled, setSMS] = useState<boolean>(false);
     const [unauthorized, setUnauthorized] = useState<boolean>(false);
     const onSubmit = handleSubmit(async (data) => {
         if (phase === 0) {
             await axios.post(`${api}/login`, data, {
                 withCredentials: true
             })
-            .then(res => {
+            .then(async (res) => {
                 if(res.status === 200){
                     if(res.data['otp'] === true) {
+                        if(res.data['smsEnabled']) setSMS(true);
                         setPhase(1);
+                    } else if(res.data['smsEnabled']) {
+                        setPhase(2);
+                        await axios.post(`${api}/sms-login`, data, {
+                            withCredentials: true
+                        })
                     } else {
                         navigate('/');
                     }
@@ -40,7 +48,7 @@ export default function LoginPage() {
                 }
                 console.error(err)
             })
-        } else if (phase === 1) {
+        } else if (phase === 1 || phase === 2) {
             await axios.post(`${api}/verify-otp`, data, {
                 withCredentials: true
             })
@@ -100,7 +108,8 @@ export default function LoginPage() {
                     helperText={error ? error.message : null}/>
                 )}
                 />
-                </div> :
+                </div> : 
+                phase === 1 ?
                 <Controller
                 name='otp_token'
                 control={control}
@@ -117,7 +126,24 @@ export default function LoginPage() {
                     error={!!error}
                     helperText={error ? error.message : null}/>
                 )}
-                /> 
+                /> : 
+                <Controller
+                name='sms_token'
+                control={control}
+                defaultValue=''
+                rules={{ required: false }}
+                render={({ field: { onChange, value }, fieldState: {  error } }) => (
+                    <TextField 
+                    label="SMS Code" 
+                    variant="outlined" 
+                    margin="normal" 
+                    fullWidth 
+                    value={value}
+                    onChange={onChange}
+                    error={!!error}
+                    helperText={error ? error.message : null}/>
+                )}
+                />  
                 }
                 <Button 
                 sx={{ mt:2 }} 
@@ -127,7 +153,22 @@ export default function LoginPage() {
                 color="primary"
                 type='submit'>
                     {phase === 0 ? 'Login' : 'Verify'}
-                </Button> 
+                </Button>
+                {phase === 1 && smsEnabled ? 
+                <Button 
+                sx={{ mt:2 }} 
+                variant="contained" 
+                size='large' 
+                fullWidth
+                color="primary"
+                onClick={async () => {
+                    setPhase(2)
+                    await axios.post(`${api}/sms-login`, control, {
+                        withCredentials: true
+                    })
+                }}>
+                    Use SMS Token
+                </Button> : null } 
             </form>
             </div>
             <div className='paperBg'>
