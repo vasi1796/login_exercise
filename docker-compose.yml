@@ -16,6 +16,10 @@ services:
       - ./api:/usr/src/app
     depends_on:
       - db
+      - cache
+    environment:
+      REDIS_HOST: cache
+      REDIS_PORT: 6379
     command: ["npm", "run", "dev:debug"]
   app:
     build: app
@@ -23,6 +27,16 @@ services:
       - "3001:3001"
     volumes:
       - ./app/src:/usr/src/app/src
+  cache:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --save 20 1 --loglevel warning
+    volumes: 
+      - cache:/data
 volumes:
   dbLoginData:
+    driver: local
+  cache:
     driver: local

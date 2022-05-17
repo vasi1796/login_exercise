@@ -7,6 +7,8 @@ const router = Router({mergeParams: true});
 
 router.post('/login', AuthController.login);
 
+router.post('/verify-number', authorize, AuthController.verifyNumber);
+
 router.post('/verify-otp', authorizeOtp, AuthController.verifyOtp);
 
 router.get('/logout', AuthController.logout);

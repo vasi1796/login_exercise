@@ -7,24 +7,48 @@ import * as qrcode from 'qrcode';
 import * as crypto from 'crypto';
 import {User} from '@prisma/client';
 import {client} from '../services/sms';
-
+import {redisClient} from 'services/cache';
+import {encrypt} from 'util/util';
 class AuthController {
+  verifyNumber = async (req: Request, res: Response) => {
+    const {email, tel_number} = req.body;
+    const generatedNumber = Math.floor(Math.random() * 899999 + 100000);
+    // Send sms verification
+    await client.messages
+        .create({
+          body: `Your OTP verification code is ${generatedNumber}`,
+          to: `+${tel_number}`,
+          from: process.env.TWILIO_NO,
+        })
+        .then((message) => console.log(message.sid))
+        .catch((err) => {
+          console.log(err);
+          res.status(500).end();
+        });
+    await redisClient.set(email, `${generatedNumber}`);
+    await redisClient.expire(email, 300);
+    res.status(200).end();
+  };
+
   signup = async (req: Request, res: Response) => {
     try {
-      const {name, email, password, base32, otp_token, tel_number} = req.body;
-      // placeholder to test twilio
-      await client.messages
-          .create({
-            body: 'Hello from Registration',
-            to: `+${tel_number}`, // Text this number
-            from: process.env.TWILIO_NO, // From a valid Twilio number
-          })
-          .then((message) => console.log(message.sid))
-          .catch((err) => console.log(err));
+      const {name, email, password,
+        base32, otp_token,
+        sms_token, tel_number} = req.body;
       let otpVerified: boolean = false;
-      let otpCipher: crypto.Cipher | undefined = undefined;
-      let otpIv: Buffer | undefined = undefined;
+      let smsVerified: boolean = false;
+      let otpIv: string | undefined = undefined;
       let encryptedOtp: string | undefined = undefined;
+      let encryptedPhone: string | undefined = undefined;
+      let phoneIv: string | undefined = undefined;
+
+      // Verify sms token if exists
+      if (sms_token) {
+        const smsToken = await redisClient.get(email);
+        if (sms_token !== smsToken) throw new Error('SMS OTP not correct');
+        smsVerified = true;
+        [encryptedPhone, phoneIv] = encrypt(tel_number);
+      }
 
       // Verify secret against user token
       if (otp_token) {
@@ -35,16 +59,7 @@ class AuthController {
         });
         if (!otpVerified) throw new Error('OTP not verified');
 
-        // Encrypt with aes
-        const algorithm = 'aes-256-cbc';
-        // generate 16 bytes of random data
-        otpIv = crypto.randomBytes(16);
-        otpCipher = crypto.createCipheriv(
-            algorithm,
-            process.env.TOTP_SECRET as string,
-            otpIv);
-        encryptedOtp = otpCipher.update(base32, 'utf-8', 'hex');
-        encryptedOtp += otpCipher.final('hex');
+        [encryptedOtp, otpIv] = encrypt(base32);
       }
 
       // Hash regular password
@@ -58,8 +73,10 @@ class AuthController {
           name,
           email,
           user_password,
-          totp_iv: otpVerified ? otpIv?.toString('base64') : undefined,
+          totp_iv: otpVerified ? otpIv : undefined,
           totp: otpVerified ? encryptedOtp : undefined,
+          number: smsVerified ? encryptedPhone : undefined,
+          number_iv: smsVerified ? phoneIv : undefined,
         },
       });
 
