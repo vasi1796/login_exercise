@@ -1,5 +1,5 @@
 import { CircularProgress, Container } from "@mui/material";
-import './LoadingPage.css';
+import './LoadingPage.scss';
 
 export default function LoadingPage() {
     return (

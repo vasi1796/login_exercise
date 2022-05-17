@@ -1,4 +1,4 @@
-import './LoginPage.css';
+import './LoginPage.scss';
 import ParticlesBg from 'particles-bg';
 import TextField from '@mui/material/TextField';
 import { Button, Container, CssBaseline } from '@mui/material';
