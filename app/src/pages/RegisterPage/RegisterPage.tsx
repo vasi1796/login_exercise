@@ -95,7 +95,7 @@ export default function RegisterPage() {
             <div className='paper'>
             <h2>Register new user</h2>
             { unauthorized ? <div className='incorrect'>Incorrect details provided</div> : null}
-            { qrCode && qrCode.qr && mfaEnabled.app ? <img src={qrCode.qr}/> : null}
+            { qrCode && qrCode.qr && mfaEnabled.app && phase === 0 ? <img src={qrCode.qr}/> : null}
             <form className='form' onSubmit={onSubmit}>
             { phase ===0 ?
             <div>

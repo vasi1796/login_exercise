@@ -19,9 +19,9 @@ class AuthController {
           to: `+${tel_number}`,
           from: process.env.TWILIO_NO,
         })
-        .then((message) => console.log(message.sid))
+        .then((message) => console.log('SMS sent with sid:', message.sid))
         .catch((err) => {
-          console.log(err);
+          console.error(err);
           res.status(500).end();
         });
     await redisClient.set(email, `${generatedNumber}`);
@@ -114,11 +114,12 @@ class AuthController {
             to: `+${decryptedNumber}`,
             from: process.env.TWILIO_NO,
           })
-          .then((message) => console.log(message.sid))
+          .then((message) => console.log('SMS sent with sid:', message.sid))
           .catch((err) => {
-            console.log(err);
+            console.error(err);
             res.status(500).end();
           });
+      await redisClient.del(result.email);
       await redisClient.set(result.email, `${generatedNumber}`);
       await redisClient.expire(result.email, 300);
       res.status(200).end();
@@ -232,7 +233,7 @@ class AuthController {
         }
       }
     } catch (error) {
-      console.log(error);
+      console.error(error);
       return res.status(403).end();
     }
     return res.status(403).end();
@@ -264,10 +265,6 @@ class AuthController {
 
   checkLogin = async (req: Request, res: Response) => {
     res.status(200).json({loggedIn: true}).end();
-  };
-
-  addData = async (req: Request, res: Response) => {
-    res.status(200).end();
   };
 
   private generateToken = async (user: User): Promise<string> => {
