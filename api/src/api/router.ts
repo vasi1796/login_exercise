@@ -2,9 +2,16 @@ import {Router} from 'express';
 import {validate, authorize, authorizeOtp} from 'middleware/jwt';
 import AuthController from './auth.controller';
 import DataController from './data.controller';
+import passport from 'passport';
 
 // eslint-disable-next-line
 const router = Router({mergeParams: true});
+
+router.get('/auth-google', passport.authenticate('google',
+    {scope: ['profile', 'email']}));
+
+router.get('/auth/google/callback',
+    passport.authenticate('google'), AuthController.redirectGoogle);
 
 router.post('/login', AuthController.login);
 
@@ -20,7 +27,7 @@ router.get('/logged-in', validate, AuthController.checkLogin);
 
 router.get('/otp', authorize, AuthController.getOtp);
 
-router.get('/protected', validate, AuthController.checkSecret);
+router.get('/protected', validate, DataController.checkSecret);
 
 router.get('/logout', AuthController.logout);
 

@@ -170,6 +170,14 @@ export default function LoginPage() {
                     Use SMS Token
                 </Button> : null } 
             </form>
+            {phase === 0 ?
+            <a href={`${api}/auth-google`} className='google-login'>
+                <Button sx={{ mt:2 }} 
+                variant="contained" 
+                size='large' 
+                fullWidth
+                color="secondary"> Continue with Google </Button> 
+            </a> : null }
             </div>
             <div className='paperBg'>
             <ParticlesBg type='cobweb' bg={true}/>

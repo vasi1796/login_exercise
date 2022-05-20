@@ -1,4 +1,4 @@
-import {Request, Response} from 'express';
+import {NextFunction, Request, Response} from 'express';
 import * as argon2 from 'argon2';
 import db from '../services/db';
 import * as jwt from 'jsonwebtoken';
@@ -8,6 +8,8 @@ import {User} from '@prisma/client';
 import {client} from '../services/sms';
 import {redisClient} from 'services/cache';
 import {decrypt, encrypt} from 'util/util';
+import passport from 'passport';
+
 class AuthController {
   verifyNumber = async (req: Request, res: Response) => {
     const {email, tel_number} = req.body;
@@ -19,7 +21,7 @@ class AuthController {
           to: `+${tel_number}`,
           from: process.env.TWILIO_NO,
         })
-        .then((message) => console.log('SMS sent with sid:', message.sid))
+        .then((message) => console.log(message.sid))
         .catch((err) => {
           console.error(err);
           res.status(500).end();
@@ -114,7 +116,7 @@ class AuthController {
             to: `+${decryptedNumber}`,
             from: process.env.TWILIO_NO,
           })
-          .then((message) => console.log('SMS sent with sid:', message.sid))
+          .then((message) => console.log(message.sid))
           .catch((err) => {
             console.error(err);
             res.status(500).end();
@@ -259,8 +261,39 @@ class AuthController {
     }
   };
 
-  checkSecret = async (req: Request, res: Response) => {
-    res.status(200).end();
+  loginGoogle = async (req: Request, res: Response, next: NextFunction) => {
+    passport.authenticate('google',
+        {scope: ['profile', 'email']})(req, res, next);
+  };
+
+  redirectGoogle = async (req: Request, res: Response) => {
+    try {
+      if (req.body && req.body.userProfile) {
+        const email = req.body.userProfile.email;
+        const result = await db.prisma.user.findFirst({
+          where: {email: email},
+        });
+        if (result) {
+          const token = await this.generateToken(result);
+          res.status(200)
+              .cookie('entryCookie', token, {
+                httpOnly: true,
+                expires: new Date(Date.now() + 1000 * 60 * 3),
+                sameSite: 'lax',
+              })
+              .cookie('secureCookie', token, {
+                httpOnly: true,
+                expires: new Date(Date.now() + 1000 * 60 * 3),
+                sameSite: 'strict',
+              });
+          res.redirect(`${process.env.FRONTEND}/`);
+        } else {
+          res.redirect(`${process.env.FRONTEND}/login`);
+        }
+      }
+    } catch (error) {
+      res.redirect(`${process.env.FRONTEND}/login`);
+    }
   };
 
   checkLogin = async (req: Request, res: Response) => {
