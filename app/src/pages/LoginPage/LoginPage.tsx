@@ -38,7 +38,7 @@ export default function LoginPage() {
                             withCredentials: true
                         })
                     } else {
-                        navigate('/');
+                        navigate('/dashboard');
                     }
                 }
             })
@@ -54,7 +54,7 @@ export default function LoginPage() {
             })
             .then(res => {
                 if(res.status === 200){
-                    navigate('/');
+                    navigate('/dashboard');
                 }
             })
             .catch(err => {

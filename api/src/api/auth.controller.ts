@@ -286,7 +286,7 @@ class AuthController {
                 expires: new Date(Date.now() + 1000 * 60 * 3),
                 sameSite: 'strict',
               });
-          res.redirect(`${process.env.FRONTEND}/`);
+          res.redirect(`${process.env.FRONTEND}/dashboard`);
         } else {
           res.redirect(`${process.env.FRONTEND}/login`);
         }
