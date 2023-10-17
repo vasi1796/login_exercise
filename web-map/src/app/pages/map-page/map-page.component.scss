@@ -1,0 +1,68 @@
+.property-card {
+  width: 100%;
+}
+
+#map {
+  width: auto;
+  height: 20em;
+  position: relative;
+  margin-top: 1em;
+  margin-bottom: 1em;
+}
+
+.mat-mdc-standard-chip:not(.mdc-evolution-chip--disabled) {
+ background-color: #ff6c50;
+}
+
+.mat-mdc-standard-chip {
+  --mdc-chip-label-text-color: #fff;
+}
+
+.layer-box {
+  background-color: black;
+  .layer {
+    color: white;
+    mat-icon {
+      color: white;
+    }
+    min-height: 2em;
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-left: 1em;
+    .layer-icons {
+      margin-left: auto;
+      margin-right: 1em;
+      display: flex;
+      float: right;
+    }
+  }
+  .opacity-slider {
+    display: flex;
+    margin-right: 3em;
+    margin-left: 1em;
+  }
+}
+
+@media screen and (min-width:41em) {
+  .layer-menu {
+    width: 30%;
+    height: auto;
+    background-color: #006a87;
+  }
+}
+
+@media screen and (max-width:40em) {
+  .layer-menu { display: none; }
+}
+
+.map-page-layout {
+  display: flex;
+  flex-direction: row;
+  margin: 1% 20% 5% 20%;
+}
+
+.ol-attribution {
+  position: relative;
+  bottom: 50em;
+}

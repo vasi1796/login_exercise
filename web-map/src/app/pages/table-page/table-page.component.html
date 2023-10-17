@@ -1,0 +1,20 @@
+<div id="table-view">
+  <table mat-table
+        [dataSource]="dataSource"
+        matSort
+        class="mat-elevation-z3">
+    <ng-container matColumnDef="{{column.prop}}" *ngFor="let column of columnsToDisplay">
+      <th mat-header-cell *matHeaderCellDef mat-sort-header> {{column.tableTitle}} </th>
+      <td mat-cell *matCellDef="let element"> {{element[column.prop]}} </td>
+    </ng-container>
+    <tr mat-header-row *matHeaderRowDef="displayProps"></tr>
+    <tr mat-row *matRowDef="let row; columns: displayProps;" (click)="openMapPage(row)"></tr>
+  </table>
+  <mat-paginator
+    #paginator
+    [pageSizeOptions]="[5]"
+    [pageIndex]="pageIndex"
+    (page)="changePage($event)"
+    class="paginator mat-elevation-z3">
+  </mat-paginator>
+</div>

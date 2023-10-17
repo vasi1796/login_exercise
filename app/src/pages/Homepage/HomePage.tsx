@@ -2,6 +2,8 @@ import { Button } from '@mui/material';
 import axios from 'axios';
 import {useNavigate} from 'react-router-dom';
 import { api } from '../../environment';
+import './HomePage.scss';
+import { AppRegistration, Logout } from '@mui/icons-material';
 
 export default function HomePage() {
     const navigate = useNavigate();
@@ -20,15 +22,30 @@ export default function HomePage() {
     }
     return (
         <div>
-            <h1>Protected path</h1>
-            <Button sx={{ m:2 }} variant="contained"  onClick={onLogout}>Logout</Button>
+            <div className='header'>
+            <h1>Dashboard</h1>
+            <div>
+            <Button variant="contained" endIcon={<AppRegistration />}
+                sx={{ m:1 }} 
+                color="primary"
+                size='small'
+                onClick={() => navigate('/register')}>
+                    Register
+                </Button>
+                <Button variant="contained"  onClick={onLogout} color='error' size='small' endIcon={<Logout />}>
+                Logout
+            </Button>
+            </div>
+            </div>
+            <div className='widgets'>
             <Button 
                 sx={{ m:2 }} 
                 variant="contained" 
                 color="secondary"
-                onClick={() => navigate('/register')}>
-                    Register new user
+                onClick={() => { window.location.href = 'http://localhost:4200'; }}>
+                    Web Map
                 </Button>
+            </div>
         </div>
     )
 }

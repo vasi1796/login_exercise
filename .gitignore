@@ -102,3 +102,8 @@ dist
 
 # TernJS port file
 .tern-port
+
+web-map/.angular
+web-map/.node_modules
+web-map/.vscode
+geoserver/

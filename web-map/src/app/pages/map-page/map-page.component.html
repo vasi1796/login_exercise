@@ -1,0 +1,30 @@
+<div class="map-page-layout">
+  <div class="layer-menu">
+    <div class="layer-box" *ngFor="let layer of availableLayers">
+      <div class="layer">
+        <span>{{layer.get('name')}}</span>
+        <div class="layer-icons">
+          <mat-icon (click)="toggleVisibility(layer)">{{layer.getVisible()?'visibility':'visibility_off'}}</mat-icon>
+          <mat-icon (click)="removeLayer(layer)">delete</mat-icon>
+        </div>
+      </div>
+      <mat-slider class="opacity-slider" [max]="maxSlider" [min]="minSlider" [step]="sliderStepSize">
+        <input matSliderThumb [value]="layer.getOpacity()" (valueChange)="setLayerOpacity($event, layer)">
+      </mat-slider>
+    </div>
+  </div>
+  <mat-card class="property-card">
+    <mat-card-header>
+    {{landTitle?.title_no}}
+    </mat-card-header>
+    <div id="map" #map></div>
+    <mat-card-content>
+      <p>{{landTitle?.prop_address}} <mat-chip>{{landTitle?.tenure}}</mat-chip></p>
+      <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec tempor libero a eros lobortis, at semper nisi blandit. Fusce in justo porta, porttitor risus at, gravida nulla. Donec sed consequat ante.</p>
+    </mat-card-content>
+    <mat-card-actions align="end">
+      <button mat-button (click)="routeBack()">Back</button>
+    </mat-card-actions>
+  </mat-card>
+</div>
+

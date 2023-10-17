@@ -1,4 +1,12 @@
 services:
+  geoserver:
+    image: docker.osgeo.org/geoserver:2.24.x
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./geoserver:/opt/geoserver_data
+    networks:
+      - demo_app
   db:
     image: postgres:latest
     environment:
@@ -7,6 +15,18 @@ services:
       - "5432:5432"
     volumes:
       - dbLoginData:/var/lib/postgresql/data
+    networks:
+      - demo_app
+  cache:
+    image: redis:latest
+    restart: always
+    ports:
+      - "6379:6379"
+    command: redis-server --save 20 1 --loglevel warning
+    volumes: 
+      - cache:/data
+    networks:
+      - demo_app
   api:
     build: api
     ports:
@@ -21,22 +41,33 @@ services:
       REDIS_HOST: cache
       REDIS_PORT: 6379
     command: ["npm", "run", "dev:debug"]
+    networks:
+      - demo_app
   app:
     build: app
     ports:
       - "3001:3001"
+    stdin_open: true
+    tty: true
     volumes:
       - ./app/src:/usr/src/app/src
-  cache:
-    image: redis:latest
-    restart: always
+    networks:
+      - demo_app
+  web-map:
+    build: web-map
     ports:
-      - "6379:6379"
-    command: redis-server --save 20 1 --loglevel warning
-    volumes: 
-      - cache:/data
+      - "4200:4200"
+    volumes:
+      - ./web-map:/usr/web-map
+    networks:
+      - demo_app
+
 volumes:
   dbLoginData:
     driver: local
   cache:
     driver: local
+
+networks:
+  demo_app:
+    driver: bridge
