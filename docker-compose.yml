@@ -48,7 +48,6 @@ services:
     ports:
       - "3001:3001"
     stdin_open: true
-    tty: true
     volumes:
       - ./app/src:/usr/src/app/src
     networks:
